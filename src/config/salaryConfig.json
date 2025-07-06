@@ -1,0 +1,14 @@
+{
+  "weights": {
+    "runs": 100,
+    "fours": 250,
+    "sixes": 500,
+    "wickets": 2000,
+    "catches": 500
+  },
+  "bonuses": {
+    "halfCentury": 5000,
+    "century": 10000,
+    "fiveWicketHaul": 8000
+  }
+}
