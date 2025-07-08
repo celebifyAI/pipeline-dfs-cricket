@@ -72,3 +72,19 @@ export async function getContestTypes(): Promise<ContestType[]> {
     }
     return data;
 }
+
+// Fetches all user profiles
+export async function getUsers() {
+    noStore();
+    const supabase = createClient(cookies());
+    const { data, error } = await supabase
+        .from("profiles")
+        .select(`*`)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Database Error (getUsers):", error.message);
+        return [];
+    }
+    return data;
+}
