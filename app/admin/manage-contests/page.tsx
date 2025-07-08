@@ -1,12 +1,17 @@
+import { Suspense } from "react";
 import { getContests } from "@/lib/data"
 import { ContestList } from "@/components/admin/contest-list"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { PlusCircle } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default async function Page() {
-  const contests = await getContests()
+async function ContestTable() {
+  const contests = await getContests();
+  return <ContestList contests={contests} />;
+}
 
+export default function Page() {
   return (
     <div className="w-full">
       <div className="flex w-full items-center justify-between">
@@ -19,8 +24,10 @@ export default async function Page() {
         </Button>
       </div>
       <div className="mt-4">
-        <ContestList contests={contests} />
+        <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+          <ContestTable />
+        </Suspense>
       </div>
     </div>
-  )
+  );
 }
