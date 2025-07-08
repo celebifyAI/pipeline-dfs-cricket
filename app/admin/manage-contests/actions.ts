@@ -1,40 +1,78 @@
-// --- START: COPY THIS CODE for app/admin/manage-contests/actions.ts ---
-
-"use server";
+// --- START: COPY THIS CODE for lib/data.ts ---
 
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { z } from "zod";
+import { unstable_noStore as noStore } from 'next/cache';
 
-const ContestSchema = z.object({
-  name: z.string().min(3, "Contest name is too short"),
-  // Add other fields from your form here for validation
-});
+// Define the structure of your data types
+export type Contest = {
+  contest_id: number;
+  name: string;
+  total_prize: number;
+  entry_fee: number;
+  max_entries: number;
+  status: "Upcoming" | "Live" | "Completed" | "Cancelled";
+  match: {
+    team_a_name: string;
+    team_b_name: string;
+    start_time: string;
+  } | null;
+};
 
-// This function creates a new contest
-export async function createContest(formData: FormData) {
-  // Add your logic to create a contest here
-  // Example:
-  // const validatedFields = ContestSchema.safeParse(Object.fromEntries(formData.entries()));
-  // ... database logic ...
-  
-  console.log("Creating contest...");
+export type ContestType = {
+  type_id: number;
+  name: string;
+  description: string | null;
+};
 
-  revalidatePath("/admin/contests");
-  redirect("/admin/contests");
+export type Match = {
+  match_id: number;
+  team_a_name: string;
+  team_b_name: string;
+  start_time: string;
+  status: "Upcoming" | "Live" | "Completed";
+};
+
+// Fetches all contests
+export async function getContests() {
+  noStore();
+  const supabase = createClient(cookies());
+  const { data, error } = await supabase
+    .from("contests")
+    .select(`*, match:matches(*)`)
+    .order('contest_id', { ascending: false });
+
+  if (error) {
+    console.error("Database Error (getContests):", error.message);
+    return [];
+  }
+  return data as Contest[];
 }
 
-// This function updates an existing contest
-export async function updateContest(contestId: number, formData: FormData) {
-  // Add your logic to update a contest here
-  
-  console.log(`Updating contest ${contestId}...`);
+// Fetches all matches for contest creation forms
+export async function getMatches(): Promise<Match[]> {
+    noStore();
+    const supabase = createClient(cookies());
+    const { data, error } = await supabase.from('matches').select('*').order('start_time');
 
-  revalidatePath("/admin/contests");
-  revalidatePath(`/admin/contests/${contestId}/edit`);
-  redirect("/admin/contests");
+    if (error) {
+        console.error('Database Error (getMatches):', error.message);
+        return [];
+    }
+    return data;
+}
+
+// Fetches all contest types for contest creation forms
+export async function getContestTypes(): Promise<ContestType[]> {
+    noStore();
+    const supabase = createClient(cookies());
+    const { data, error } = await supabase.from('contest_types').select('*');
+
+    if (error) {
+        console.error('Database Error (getContestTypes):', error.message);
+        return [];
+    }
+    return data;
 }
 
 // --- END: COPY THIS CODE ---

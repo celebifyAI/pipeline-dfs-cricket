@@ -4,7 +4,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, BarChart } from "lucide-react";
 
@@ -14,6 +13,7 @@ const navItems = [
   { href: "/admin/users", label: "Users", icon: Users },
 ];
 
+// We add "export default" to fix the build error
 export default function Sidebar() {
   const pathname = usePathname();
 
@@ -29,7 +29,7 @@ export default function Sidebar() {
         {navItems.map((item) => (
           <Button
             key={item.label}
-            variant={pathname === item.href ? "secondary" : "ghost"}
+            variant={pathname.startsWith(item.href) ? "secondary" : "ghost"}
             className="justify-start"
             asChild
           >

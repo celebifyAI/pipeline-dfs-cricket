@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { unstable_noStore as noStore } from 'next/cache';
 
+// Define the structure of your data types
 export type Contest = {
   contest_id: number;
   name: string;
@@ -32,6 +33,7 @@ export type Match = {
   status: "Upcoming" | "Live" | "Completed";
 };
 
+// Fetches all contests
 export async function getContests() {
   noStore();
   const supabase = createClient(cookies());
@@ -47,6 +49,7 @@ export async function getContests() {
   return data as Contest[];
 }
 
+// Fetches all matches for contest creation forms
 export async function getMatches(): Promise<Match[]> {
     noStore();
     const supabase = createClient(cookies());
@@ -59,6 +62,7 @@ export async function getMatches(): Promise<Match[]> {
     return data;
 }
 
+// Fetches all contest types for contest creation forms
 export async function getContestTypes(): Promise<ContestType[]> {
     noStore();
     const supabase = createClient(cookies());
