@@ -1,60 +1,48 @@
-'use client'
+// --- START: COPY THIS CODE for app/admin/layout.tsx ---
 
-import type { ReactNode } from "react"
-import Link from "next/link"
-import { Trophy, Users, Settings, LayoutDashboard } from "lucide-react"
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import Sidebar from "@/components/ui/sidebar";
 
-// This layout provides the navigation for the Promoter (admin).
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const supabase = createClient(cookies());
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    // If no user is logged in, redirect to the login page
+    return redirect("/auth/login");
+  }
+
+  // Check for the user's role in your 'profiles' table
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (error || !profile || profile.role !== "admin") {
+    // If there's an error, no profile, or the user is not an admin,
+    // redirect them to the main dashboard.
+    return redirect("/dashboard");
+  }
+
+  // If the user is an admin, show the admin layout with a sidebar.
   return (
-    <div className="flex min-h-screen w-full bg-[#0A0A0A] text-white">
-      <aside className="hidden w-64 flex-shrink-0 border-r border-gray-800 bg-[#121212] p-4 md:flex flex-col">
-        <div className="mb-8 flex items-center gap-2">
-          <Trophy className="h-8 w-8 text-purple-400" />
-          <h1 className="text-2xl font-bold">PIPELINE</h1>
-        </div>
-        <nav className="flex-grow space-y-2">
-          <Link
-            href="/admin"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 transition-all hover:bg-gray-800 hover:text-white"
-          >
-            <LayoutDashboard className="h-5 w-5" />
-            Dashboard
-          </Link>
-          <Link
-            href="/admin/contests"
-            className="flex items-center gap-3 rounded-lg bg-gray-800 px-3 py-2 text-white" // Active link style
-          >
-            <Trophy className="h-5 w-5" />
-            Contests
-          </Link>
-          <Link
-            href="/admin/users"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 transition-all hover:bg-gray-800 hover:text-white"
-          >
-            <Users className="h-5 w-5" />
-            Users
-          </Link>
-          <Link
-            href="/admin/settings"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-300 transition-all hover:bg-gray-800 hover:text-white"
-          >
-            <Settings className="h-5 w-5" />
-            Settings
-          </Link>
-        </nav>
-      </aside>
-
-      <div className="flex flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-gray-800 bg-[#121212] px-6">
-          <h2 className="text-xl font-semibold">Admin Panel</h2>
-          <div className="flex items-center gap-4">
-            {/* You can add a user menu here for the admin */}
-            <p>Welcome, Admin</p>
-          </div>
-        </header>
-        <main className="flex-1 p-6 overflow-y-auto">{children}</main>
-      </div>
+    <div className="flex min-h-screen">
+      <Sidebar />
+      <main className="flex-1 p-6 bg-gray-900 text-white">
+        {children}
+      </main>
     </div>
-  )
+  );
 }
+
+// --- END: COPY THIS CODE ---

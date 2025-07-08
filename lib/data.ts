@@ -1,61 +1,73 @@
-import { createClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
-import type { Match, Player, Contest } from "@/types"
+// --- START: COPY THIS CODE for lib/data.ts ---
 
-// Define the ContestType type
+import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { unstable_noStore as noStore } from 'next/cache';
+
+// Define the structure of your data types
+// This helps prevent errors and makes your code easier to work with.
+
+export type Contest = {
+  contest_id: number;
+  name: string;
+  total_prize: number;
+  entry_fee: number;
+  max_entries: number;
+  status: "Upcoming" | "Live" | "Completed" | "Cancelled";
+  match: {
+    team_a_name: string;
+    team_b_name: string;
+    start_time: string;
+  } | null;
+};
+
 export type ContestType = {
-  type_id: number
-  name: string
-  description: string | null
-}
+  type_id: number;
+  name: string;
+  description: string | null;
+};
 
-// This function fetches all available matches
-export async function getMatches(): Promise<Match[]> {
-  const supabase = createClient(cookies())
-  const { data, error } = await supabase.from("matches").select("*").order("starts_at", { ascending: true })
+export type Match = {
+  match_id: number;
+  team_a_name: string;
+  team_b_name: string;
+  start_time: string;
+  status: "Upcoming" | "Live" | "Completed";
+};
 
-  if (error) {
-    console.error("Database Error fetching matches:", error.message)
-    // Throw an error instead of returning an empty array
-    throw new Error("Failed to fetch matches.")
-  }
-  return data
-}
+// This function fetches all contests from the database.
+export async function getContests() {
+  // noStore() prevents the result from being cached.
+  // This is useful for data that changes often.
+  noStore();
+  
+  const supabase = createClient(cookies());
 
-// This function fetches all available players
-export async function getPlayers(): Promise<Player[]> {
-  const supabase = createClient(cookies())
-  const { data, error } = await supabase.from("players").select("*").order("initial_salary", { ascending: false })
-
-  if (error) {
-    console.error("Database Error fetching players:", error.message)
-    // Throw an error instead of returning an empty array
-    throw new Error("Failed to fetch players.")
-  }
-  return data
-}
-
-// This function fetches all available contests
-export async function getContests(): Promise<Contest[]> {
-  const supabase = createClient(cookies())
-  const { data, error } = await supabase.from("contests").select("*").order("ends_at", { ascending: true })
-
-  if (error) {
-    console.error("Database Error fetching contests:", error.message)
-    // Throw an error instead of returning an empty array
-    throw new Error("Failed to fetch contests.")
-  }
-  return data
-}
-
-// This new function fetches your dynamic contest types
-export async function getContestTypes(): Promise<ContestType[]> {
-  const supabase = createClient(cookies())
-  const { data, error } = await supabase.from("contest_types").select("*").order("name", { ascending: true })
+  const { data, error } = await supabase
+    .from("contests")
+    .select(`
+      contest_id,
+      name,
+      total_prize,
+      entry_fee,
+      max_entries,
+      status,
+      match:matches (
+        team_a_name,
+        team_b_name,
+        start_time
+      )
+    `)
+    .order('contest_id', { ascending: false });
 
   if (error) {
-    console.error("Database Error fetching contest types:", error.message)
-    throw new Error("Failed to fetch contest types.")
+    console.error("Database Error:", error.message);
+    // Instead of crashing, we'll return an empty array.
+    // The page can then display a "no contests found" message.
+    return [];
   }
-  return data
+
+  return data as Contest[];
 }
+
+// --- END: COPY THIS CODE ---
