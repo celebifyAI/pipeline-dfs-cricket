@@ -1,5 +1,3 @@
-// --- START: COPY THIS CODE for lib/data.ts ---
-
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { unstable_noStore as noStore } from 'next/cache';
@@ -74,5 +72,3 @@ export async function getContestTypes(): Promise<ContestType[]> {
     }
     return data;
 }
-
-// --- END: COPY THIS CODE ---

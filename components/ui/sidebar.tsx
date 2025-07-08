@@ -1,5 +1,3 @@
-// --- START: COPY THIS CODE for components/ui/sidebar.tsx ---
-
 "use client";
 
 import Link from "next/link";
@@ -9,11 +7,10 @@ import { Trophy, Users, BarChart } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: BarChart },
-  { href: "/admin/contests", label: "Contests", icon: Trophy },
+  { href: "/admin/manage-contests", label: "Contests", icon: Trophy },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
 
-// We add "export default" to fix the build error
 export default function Sidebar() {
   const pathname = usePathname();
 
@@ -43,5 +40,3 @@ export default function Sidebar() {
     </aside>
   );
 }
-
-// --- END: COPY THIS CODE ---

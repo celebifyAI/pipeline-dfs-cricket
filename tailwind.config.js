@@ -1,11 +1,14 @@
 /** @type {import('tailwindcss').Config} */
-const defaultConfig = require("shadcn/ui/tailwind.config")
-
 module.exports = {
-  ...defaultConfig,
-  content: [...defaultConfig.content, "./pages/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}", "*.{js,ts,jsx,tsx,mdx}"],
+  darkMode: ["class"],
+  content: [
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
+	],
+  prefix: "",
   theme: {
-    ...defaultConfig.theme,
     container: {
       center: true,
       padding: "2rem",
@@ -14,15 +17,14 @@ module.exports = {
       },
     },
     extend: {
-      ...defaultConfig.theme.extend,
       keyframes: {
         "accordion-down": {
-          from: { height: "0" },
+          from: { height: "0px" },
           to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          to: { height: "0px" },
         },
       },
       animation: {
@@ -31,5 +33,5 @@ module.exports = {
       },
     },
   },
-  plugins: [...defaultConfig.plugins, require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate")],
 }
