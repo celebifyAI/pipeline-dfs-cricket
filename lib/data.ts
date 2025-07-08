@@ -4,9 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { unstable_noStore as noStore } from 'next/cache';
 
-// Define the structure of your data types
-// This helps prevent errors and makes your code easier to work with.
-
 export type Contest = {
   contest_id: number;
   name: string;
@@ -35,39 +32,43 @@ export type Match = {
   status: "Upcoming" | "Live" | "Completed";
 };
 
-// This function fetches all contests from the database.
 export async function getContests() {
-  // noStore() prevents the result from being cached.
-  // This is useful for data that changes often.
   noStore();
-  
   const supabase = createClient(cookies());
-
   const { data, error } = await supabase
     .from("contests")
-    .select(`
-      contest_id,
-      name,
-      total_prize,
-      entry_fee,
-      max_entries,
-      status,
-      match:matches (
-        team_a_name,
-        team_b_name,
-        start_time
-      )
-    `)
+    .select(`*, match:matches(*)`)
     .order('contest_id', { ascending: false });
 
   if (error) {
-    console.error("Database Error:", error.message);
-    // Instead of crashing, we'll return an empty array.
-    // The page can then display a "no contests found" message.
+    console.error("Database Error (getContests):", error.message);
     return [];
   }
-
   return data as Contest[];
+}
+
+export async function getMatches(): Promise<Match[]> {
+    noStore();
+    const supabase = createClient(cookies());
+    const { data, error } = await supabase.from('matches').select('*').order('start_time');
+
+    if (error) {
+        console.error('Database Error (getMatches):', error.message);
+        return [];
+    }
+    return data;
+}
+
+export async function getContestTypes(): Promise<ContestType[]> {
+    noStore();
+    const supabase = createClient(cookies());
+    const { data, error } = await supabase.from('contest_types').select('*');
+
+    if (error) {
+        console.error('Database Error (getContestTypes):', error.message);
+        return [];
+    }
+    return data;
 }
 
 // --- END: COPY THIS CODE ---
