@@ -2,12 +2,11 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Edit } from "lucide-react"
+import { Edit, UserPlus } from "lucide-react"
 
-// We need a specific type for the user profile data
 export type Profile = {
   id: string;
   full_name: string | null;
@@ -16,6 +15,7 @@ export type Profile = {
   created_at: string;
 }
 
+// A more robust and visually appealing UserList component
 export function UserList({ users }: { users: Profile[] }) {
   const getRoleBadgeVariant = (role: Profile['role']) => {
     switch (role) {
@@ -28,10 +28,35 @@ export function UserList({ users }: { users: Profile[] }) {
     }
   }
 
+  // Handle the empty state
+  if (!users || users.length === 0) {
+    return (
+      <Card className="text-center">
+        <CardHeader>
+            <div className="mx-auto bg-gray-800 rounded-full p-3 w-fit">
+                <UserPlus className="h-8 w-8 text-gray-400" />
+            </div>
+          <CardTitle className="mt-4">No Users Found</CardTitle>
+          <CardDescription>
+            It looks like there are no users on the platform yet. <br />
+            Get started by creating the first user account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild>
+            <Link href="/admin/users/create">Create a New User</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Display the table if there are users
   return (
     <Card>
       <CardHeader>
         <CardTitle>All Users</CardTitle>
+        <CardDescription>A list of all users on the platform.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
@@ -50,7 +75,7 @@ export function UserList({ users }: { users: Profile[] }) {
                 <TableCell className="font-medium">{user.full_name || 'N/A'}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Badge variant={getRoleBadgeVariant(user.role)}>
+                  <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize">
                     {user.role || 'N/A'}
                   </Badge>
                 </TableCell>
