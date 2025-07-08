@@ -1,165 +1,271 @@
-"use client"
+// components/admin/contest-form.tsx
+'use client'
 
-import type React from "react"
+import React, { useState, useEffect } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { toast } from 'sonner'
+import { Check, ChevronsUpDown } from 'lucide-react'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { Calendar } from '@/components/ui/calendar'
+import { cn } from '@/lib/utils'
+import { format } from 'date-fns'
 
-import { useActionState, useState } from "react"
-import type { Match, ContestType } from "@/lib/data"
-import { createContest } from "@/app/admin/contests/actions"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { Loader2, Upload } from "lucide-react"
-import Image from "next/image"
+// Renamed and moved the actions file to the new folder
+import { createContest, updateContest } from '@/app/admin/manage-contests/actions' // <-- FIXED IMPORT PATH
+import type { ContestType } from '@/lib/data' // Assuming ContestType is still from lib/data
 
-export function ContestForm({ matches, contestTypes }: { matches: Match[]; contestTypes: ContestType[] }) {
-  const [state, action, isPending] = useActionState(createContest, undefined)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: 'Contest name must be at least 2 characters.',
+  }),
+  description: z.string().optional(),
+  total_prize: z.coerce.number().min(1, { message: 'Prize must be at least 1.' }),
+  entry_fee: z.coerce.number().min(0, { message: 'Entry fee cannot be negative.' }),
+  max_entries: z.coerce.number().min(1, { message: 'Max entries must be at least 1.' }),
+  ends_at: z.date({
+    required_error: 'An end date is required.',
+  }),
+  contest_type_id: z.coerce.number().min(1, { message: 'Contest type is required.' }),
+})
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
+type ContestFormProps = {
+  initialData?: any // TODO: Replace 'any' with a proper Contest type
+  contestTypes: ContestType[]
+}
+
+export function ContestForm({ initialData, contestTypes }: ContestFormProps) {
+  const isEditMode = !!initialData?.contest_id
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: initialData?.name || '',
+      description: initialData?.description || '',
+      total_prize: initialData?.total_prize || 0,
+      entry_fee: initialData?.entry_fee || 0,
+      max_entries: initialData?.max_entries || 0,
+      ends_at: initialData?.ends_at ? new Date(initialData.ends_at) : undefined,
+      contest_type_id: initialData?.contest_type_id || undefined,
+    },
+  })
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      let result
+      if (isEditMode) {
+        result = await updateContest(initialData.contest_id, values)
+        toast.success('Contest updated successfully!')
+      } else {
+        result = await createContest(values)
+        toast.success('Contest created successfully!')
+        form.reset() // Clear form after successful creation
       }
-      reader.readAsDataURL(file)
-    } else {
-      setImagePreview(null)
+      console.log('Operation Result:', result) // Log for debugging
+    } catch (error: any) {
+      console.error('Error submitting form:', error)
+      toast.error(`Error: ${error.message || 'An unexpected error occurred.'}`)
     }
   }
 
   return (
-    <form action={action}>
-      <Card className="bg-[#121212] border-gray-800">
-        <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Column 1 */}
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">Contest Name</Label>
-              <Input id="name" name="name" placeholder="e.g., Weekend Mega Bash" className="mt-1" />
-              {state?.errors?.name && <p className="text-sm text-red-400 mt-1">{state.errors.name[0]}</p>}
-            </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Contest Name</FormLabel>
+              <FormControl>
+                <Input placeholder="My Awesome Contest" {...field} />
+              </FormControl>
+              <FormDescription>This is the name of your fantasy contest.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="match_id">Match</Label>
-                <Select name="match_id">
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select a match" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {matches
-                      .filter((m) => m.status === "Upcoming")
-                      .map((match) => (
-                        <SelectItem key={match.match_id} value={String(match.match_id)}>
-                          {match.team_a_name} vs {match.team_b_name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                {state?.errors?.match_id && <p className="text-sm text-red-400 mt-1">{state.errors.match_id[0]}</p>}
-              </div>
-              <div>
-                <Label htmlFor="contest_type_id">Contest Type</Label>
-                <Select name="contest_type_id">
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {contestTypes.map((type) => (
-                      <SelectItem key={type.type_id} value={String(type.type_id)}>
-                        {type.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {state?.errors?.contest_type_id && (
-                  <p className="text-sm text-red-400 mt-1">{state.errors.contest_type_id[0]}</p>
-                )}
-              </div>
-            </div>
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea placeholder="A brief description of the contest" {...field} />
+              </FormControl>
+              <FormDescription>Optional: provide more details about the contest.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="total_prize">Total Prize (₹)</Label>
-                <Input id="total_prize" name="total_prize" type="number" placeholder="50000" className="mt-1" />
-                {state?.errors?.total_prize && (
-                  <p className="text-sm text-red-400 mt-1">{state.errors.total_prize[0]}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="entry_fee">Entry Fee (₹)</Label>
-                <Input id="entry_fee" name="entry_fee" type="number" placeholder="49" className="mt-1" />
-                {state?.errors?.entry_fee && <p className="text-sm text-red-400 mt-1">{state.errors.entry_fee[0]}</p>}
-              </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="total_prize"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Total Prize (₹)</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value))} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="max_entries">Max Entries</Label>
-                <Input id="max_entries" name="max_entries" type="number" placeholder="1000" className="mt-1" />
-                {state?.errors?.max_entries && (
-                  <p className="text-sm text-red-400 mt-1">{state.errors.max_entries[0]}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="ends_at">Ends At</Label>
-                <Input id="ends_at" name="ends_at" type="datetime-local" className="mt-1" />
-                {state?.errors?.ends_at && <p className="text-sm text-red-400 mt-1">{state.errors.ends_at[0]}</p>}
-              </div>
-            </div>
-          </div>
+          <FormField
+            control={form.control}
+            name="entry_fee"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Entry Fee (₹)</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value))} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-          {/* Column 2 */}
-          <div className="space-y-2">
-            <Label htmlFor="banner">Contest Banner</Label>
-            <div className="mt-1 flex justify-center rounded-lg border border-dashed border-gray-700 px-6 py-10">
-              <div className="text-center">
-                {imagePreview ? (
-                  <Image
-                    src={imagePreview || "/placeholder.svg"}
-                    alt="Banner preview"
-                    width={400}
-                    height={200}
-                    className="mx-auto h-32 w-auto object-contain"
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="max_entries"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Maximum Entries</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value))} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="contest_type_id"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Contest Type</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          'w-full justify-between',
+                          !field.value && 'text-muted-foreground',
+                        )}
+                      >
+                        {field.value
+                          ? contestTypes.find(
+                            (type) => type.type_id === field.value,
+                          )?.name
+                          : 'Select contest type'}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput placeholder="Search type..." />
+                      <CommandEmpty>No type found.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandList>
+                          {contestTypes.map((type) => (
+                            <CommandItem
+                              value={type.name}
+                              key={type.type_id}
+                              onSelect={() => {
+                                form.setValue('contest_type_id', type.type_id)
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  'mr-2 h-4 w-4',
+                                  type.type_id === field.value
+                                    ? 'opacity-100'
+                                    : 'opacity-0',
+                                )}
+                              />
+                              {type.name}
+                            </CommandItem>
+                          ))}
+                        </CommandList>
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <FormDescription>
+                  Choose the type of contest (e.g., Head-to-Head, Mega Contest).
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="ends_at"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>End Date</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={'outline'}
+                      className={cn(
+                        'w-full pl-3 text-left font-normal',
+                        !field.value && 'text-muted-foreground',
+                      )}
+                    >
+                      {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                      <Calendar className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) => date < new Date()} // Disable past dates
+                    initialFocus
                   />
-                ) : (
-                  <Upload className="mx-auto h-12 w-12 text-gray-500" />
-                )}
-                <div className="mt-4 flex text-sm leading-6 text-gray-400">
-                  <label
-                    htmlFor="banner"
-                    className="relative cursor-pointer rounded-md font-semibold text-green-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-green-500 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 hover:text-green-300"
-                  >
-                    <span>Upload a file</span>
-                    <Input id="banner" name="banner" type="file" className="sr-only" onChange={handleFileChange} />
-                  </label>
-                  <p className="pl-1">or drag and drop</p>
-                </div>
-                <p className="text-xs leading-5 text-gray-500">PNG, JPG, GIF up to 4MB</p>
-              </div>
-            </div>
-            {state?.errors?.banner && <p className="text-sm text-red-400 mt-1">{state.errors.banner[0]}</p>}
-          </div>
-        </CardContent>
-        <CardFooter className="bg-gray-800/50 px-6 py-4">
-          <div className="w-full flex justify-end">
-            <Button type="submit" disabled={isPending} className="bg-green-600 hover:bg-green-700 text-black">
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Contest...
-                </>
-              ) : (
-                "Create Contest"
-              )}
-            </Button>
-          </div>
-          {state?.message && <p className="text-sm text-red-400 mt-2">{state.message}</p>}
-        </CardFooter>
-      </Card>
-    </form>
+                </PopoverContent>
+              </Popover>
+              <FormDescription>
+                Set the date when this contest will no longer accept entries.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit">{isEditMode ? 'Update Contest' : 'Create Contest'}</Button>
+      </form>
+    </Form>
   )
 }
