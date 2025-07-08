@@ -31,7 +31,7 @@ export type State = {
     max_entries?: string[];
   };
   message?: string | null;
-};
+} | null;
 
 export async function createContest(prevState: State, formData: FormData) {
   const validatedFields = CreateContest.safeParse(Object.fromEntries(formData.entries()));
