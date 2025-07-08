@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase/admin"; // Import the new admin client
+import { createAdminClient } from "@/lib/supabase/admin"; // Import the new admin client
 import { cookies } from "next/headers";
 import { unstable_noStore as noStore } from 'next/cache';
 
@@ -77,11 +77,12 @@ export async function getContestTypes(): Promise<ContestType[]> {
 // Fetches all user profiles using the admin client to bypass RLS
 export async function getUsers() {
     noStore();
+    const supabaseAdmin = createAdminClient();
     // Using the admin client here
     const { data, error } = await supabaseAdmin
         .from("profiles")
         .select(`*`)
-        .order('created_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
     if (error) {
         console.error("Database Error (getUsers):", error.message);
