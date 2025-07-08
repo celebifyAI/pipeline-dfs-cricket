@@ -91,12 +91,14 @@ export async function loginUser(prevState: any, formData: FormData) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Check your custom 'profiles' table or user metadata for admin status
   const { data: userProfile } = await supabase
-    .from('users')
+    .from('profiles')
     .select('is_admin')
-    .eq('id', user?.id) 
+    .eq('id', user?.id)
     .single();
 
+  // Redirect based on role
   if (userProfile?.is_admin) {
     redirect("/admin")
   } else {
@@ -133,7 +135,7 @@ export async function getUserProfile() {
   }
 
   const { data: profile } = await supabase
-    .from('users')
+    .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single();
