@@ -28,7 +28,7 @@ export type Match = {
   match_id: number;
   team_a_name: string;
   team_b_name: string;
-  start_time: string;
+  starts_at: string;
   status: "Upcoming" | "Live" | "Completed";
 };
 
@@ -52,7 +52,7 @@ export async function getContests() {
 export async function getMatches(): Promise<Match[]> {
     noStore();
     const supabase = createClient(cookies());
-    const { data, error } = await supabase.from('matches').select('*').order('start_time');
+    const { data, error } = await supabase.from('matches').select('*').order('starts_at');
 
     if (error) {
         console.error('Database Error (getMatches):', error.message);
@@ -78,11 +78,10 @@ export async function getContestTypes(): Promise<ContestType[]> {
 export async function getUsers() {
     noStore();
     const supabaseAdmin = createAdminClient();
-    // Using the admin client here
+    // Using the admin client here, we query the new users_view
     const { data, error } = await supabaseAdmin
-        .from("profiles")
-        .select(`*`)
-        .order('updated_at', { ascending: false });
+        .from("users_view")
+        .select(`*`);
 
     if (error) {
         console.error("Database Error (getUsers):", error.message);
