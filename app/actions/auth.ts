@@ -32,7 +32,7 @@ export async function signupUser(state: FormState, formData: FormData): Promise<
     }
   }
 
-  const { fullName, email, mobile, countryCode, password } = validatedFields.data
+  const { fullName, email, mobile, countryCode, password, role } = validatedFields.data
   const fullMobile = `+${countryCode}${mobile}`
 
   const { error } = await supabase.auth.signUp({
@@ -42,7 +42,7 @@ export async function signupUser(state: FormState, formData: FormData): Promise<
       data: {
         full_name: fullName,
         phone: fullMobile,
-        // Add other metadata here if needed
+        role: role, // <<< Add the role to the user's metadata
       },
     },
   })
@@ -112,6 +112,9 @@ const SignupSchema = z
     email: z.string().email("Invalid email format."),
     mobile: z.string().min(7, "Invalid mobile number."),
     countryCode: z.string(),
+    role: z.enum(["challenger", "promoter"], {
+      required_error: "You must select a role.",
+    }),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters.")

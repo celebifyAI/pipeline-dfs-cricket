@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin"; // Import the new admin client
 import { cookies } from "next/headers";
 import { unstable_noStore as noStore } from 'next/cache';
 
@@ -7,14 +6,18 @@ import { unstable_noStore as noStore } from 'next/cache';
 export type Contest = {
   contest_id: number;
   name: string;
+  match_id: number | null;
   total_prize: number;
   entry_fee: number;
   max_entries: number;
+  current_entries: number;
+  created_by: number | null;
+  ends_at: string;
   status: "Upcoming" | "Live" | "Completed" | "Cancelled";
   match: {
     team_a_name: string;
     team_b_name: string;
-    start_time: string;
+    starts_at: string;
   } | null;
 };
 
@@ -33,7 +36,7 @@ export type Match = {
 };
 
 // Fetches all contests
-export async function getContests() {
+export async function getContests(): Promise<{ data: Contest[] | null, error: string | null }> {
   noStore();
   const supabase = createClient(cookies());
   const { data, error } = await supabase
@@ -43,49 +46,33 @@ export async function getContests() {
 
   if (error) {
     console.error("Database Error (getContests):", error.message);
-    return [];
+    return { data: null, error: "Failed to fetch contests." };
   }
-  return data as Contest[];
+  return { data, error: null };
 }
 
 // Fetches all matches for contest creation forms
-export async function getMatches(): Promise<Match[]> {
+export async function getMatches(): Promise<{ data: Match[] | null, error: string | null }> {
     noStore();
     const supabase = createClient(cookies());
     const { data, error } = await supabase.from('matches').select('*').order('starts_at');
 
     if (error) {
         console.error('Database Error (getMatches):', error.message);
-        return [];
+        return { data: null, error: "Failed to fetch matches." };
     }
-    return data;
+    return { data, error: null };
 }
 
 // Fetches all contest types for contest creation forms
-export async function getContestTypes(): Promise<ContestType[]> {
+export async function getContestTypes(): Promise<{ data: ContestType[] | null, error: string | null }> {
     noStore();
     const supabase = createClient(cookies());
     const { data, error } = await supabase.from('contest_types').select('*');
 
     if (error) {
         console.error('Database Error (getContestTypes):', error.message);
-        return [];
+        return { data: null, error: "Failed to fetch contest types." };
     }
-    return data;
-}
-
-// Fetches all user profiles using the admin client to bypass RLS
-export async function getUsers() {
-    noStore();
-    const supabaseAdmin = createAdminClient();
-    // Using the admin client here, we query the new users_view
-    const { data, error } = await supabaseAdmin
-        .from("users_view")
-        .select(`*`);
-
-    if (error) {
-        console.error("Database Error (getUsers):", error.message);
-        return [];
-    }
-    return data;
-}
+    return { data, error: null };
+} 

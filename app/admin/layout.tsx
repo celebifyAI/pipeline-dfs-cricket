@@ -21,15 +21,11 @@ export default async function AdminLayout({
     return redirect("/auth/login");
   }
 
-  // Check for the user's role in your 'profiles' table
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  // Check for the user's role in the app_metadata.
+  const userRole = user.app_metadata?.role;
 
-  if (error || !profile || profile.role !== "admin") {
-    // If there's an error, no profile, or the user is not an admin,
+  if (userRole !== "admin") {
+    // If the user is not an admin,
     // redirect them to the main dashboard.
     return redirect("/dashboard");
   }

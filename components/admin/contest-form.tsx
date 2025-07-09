@@ -8,7 +8,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 
 import { createContest, updateContest, type State } from '@/app/admin/manage-contests/actions'
-import type { Match, ContestType } from '@/lib/data'
+import type { Match, ContestType } from '@/lib/data/public'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,7 +26,10 @@ const FormSchema = z.object({
   total_prize: z.coerce.number().min(0, 'Total prize must be a positive number.'),
   entry_fee: z.coerce.number().min(0, 'Entry fee must be a positive number.'),
   max_entries: z.coerce.number().min(1, 'Max entries must be at least 1.'),
-})
+  ends_at: z.string().refine((date) => new Date(date) > new Date(), {
+    message: "End date must be in the future.",
+  }),
+});
 
 type ContestFormProps = {
   contest?: any // In edit mode, we'll pass the contest data here
@@ -53,6 +56,7 @@ export function ContestForm({ contest, matches, contestTypes }: ContestFormProps
       total_prize: contest?.total_prize || 0,
       entry_fee: contest?.entry_fee || 0,
       max_entries: contest?.max_entries || 1,
+      ends_at: contest?.ends_at ? new Date(contest.ends_at).toISOString().split('T')[0] : '',
     },
   })
 
@@ -183,6 +187,23 @@ export function ContestForm({ contest, matches, contestTypes }: ContestFormProps
                 )}
               />
             </div>
+            
+            <FormField
+              control={form.control}
+              name="ends_at"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ends At</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                   <FormDescription>
+                    The date when the contest will be finalized.
+                  </FormDescription>
+                  <FormMessage>{state?.errors?.ends_at?.[0]}</FormMessage>
+                </FormItem>
+              )}
+            />
             
             <Button type="submit" disabled={isPending} className="w-full">
               {isPending ? (

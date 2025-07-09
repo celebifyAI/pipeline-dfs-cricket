@@ -5,19 +5,27 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Edit, UserPlus } from "lucide-react"
+import { Edit, UserPlus, Trash2 } from "lucide-react"
+import { deleteUser } from "@/app/admin/actions" // Assuming correct path
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
+import type { User } from "@/lib/data/admin";
 
-export type Profile = {
-  id: string;
-  full_name: string | null;
-  email: string | null;
-  role: 'admin' | 'promoter' | 'challenger' | null;
-  created_at: string;
-}
+export type { User as Profile }; // Keep Profile for compatibility if needed elsewhere, but internally use User
 
 // A more robust and visually appealing UserList component
-export function UserList({ users }: { users: Profile[] }) {
-  const getRoleBadgeVariant = (role: Profile['role']) => {
+export function UserList({ users }: { users: User[] }) {
+  const getRoleBadgeVariant = (role: User['role']) => {
     switch (role) {
       case 'admin':
         return 'destructive'
@@ -86,6 +94,37 @@ export function UserList({ users }: { users: Profile[] }) {
                       <Edit className="h-4 w-4" />
                     </Link>
                   </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the user account.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-red-500 hover:bg-red-600"
+                          onClick={async () => {
+                            const result = await deleteUser(user.id)
+                            if (result?.message.includes("success")) {
+                                toast.success("User deleted successfully.")
+                            } else {
+                                toast.error("Failed to delete user.")
+                            }
+                          }}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </TableCell>
               </TableRow>
             ))}

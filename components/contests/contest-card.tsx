@@ -1,4 +1,4 @@
-import type { Contest } from "@/types"
+import type { Contest } from "@/lib/data/public";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Users, Trophy, Tag, ArrowRight } from "lucide-react"

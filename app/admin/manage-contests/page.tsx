@@ -1,17 +1,22 @@
 import { Suspense } from "react";
-import { getContests } from "@/lib/data"
-import { ContestList } from "@/components/admin/contest-list"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { PlusCircle } from "lucide-react"
+import { getContests } from "@/lib/data/public";
+import { ContestList } from "@/components/admin/contest-list";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { PlusCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-async function ContestTable() {
-  const contests = await getContests();
-  return <ContestList contests={contests} />;
+async function ContestData() {
+  const { data: contests, error } = await getContests();
+
+  if (error) {
+    return <p className="text-red-500">{error}</p>;
+  }
+
+  return <ContestList contests={contests || []} />;
 }
 
-export default function Page() {
+export default function ManageContestsPage() {
   return (
     <div className="w-full">
       <div className="flex w-full items-center justify-between">
@@ -25,7 +30,7 @@ export default function Page() {
       </div>
       <div className="mt-4">
         <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-          <ContestTable />
+          <ContestData />
         </Suspense>
       </div>
     </div>

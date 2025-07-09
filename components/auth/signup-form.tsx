@@ -248,35 +248,46 @@ export default function SignupForm() {
     <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md bg-gray-800 border-gray-700">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <TrophyIcon className="h-8 w-8 text-purple-400" />
-            <h1 className="text-2xl font-bold text-white">PIPELINE</h1>
-          </div>
-          <CardTitle className="text-2xl font-bold text-purple-400">Join the Elite</CardTitle>
-          <CardDescription className="text-gray-300">
-            Create your account to start your strategic fantasy cricket journey
+          <TrophyIcon className="mx-auto h-12 w-12 text-yellow-400" />
+          <CardTitle className="text-2xl font-bold text-white">Create Your Account</CardTitle>
+          <CardDescription className="text-gray-400">
+            Join the elite circle of fantasy cricket enthusiasts.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={action} className="space-y-4">
             {/* Full Name */}
             <div>
-              <Label htmlFor="fullName" className="text-gray-300">
-                Full Name *
-              </Label>
+              <Label htmlFor="fullName" className="text-gray-300">Full Name</Label>
               <Input
                 id="fullName"
                 name="fullName"
                 type="text"
+                autoComplete="name"
                 required
                 value={formData.fullName}
                 onChange={(e) => handleInputChange("fullName", e.target.value)}
-                placeholder="Enter your full name"
-                className="mt-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                className="bg-gray-700 border-gray-600 text-white"
               />
-              {formData.fullName && formData.fullName.trim().length < 2 && (
-                <p className="text-sm text-red-400 mt-1">Name must be at least 2 characters</p>
-              )}
+            </div>
+
+            {/* Role Selector */}
+            <div>
+              <Label htmlFor="role" className="text-gray-300">Your Role</Label>
+              <Select
+                name="role"
+                required
+                defaultValue="challenger" // Set default value
+                onValueChange={(value) => handleInputChange("role", value)}
+              >
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Select your role..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="challenger">Challenger (I want to play)</SelectItem>
+                  <SelectItem value="promoter">Promoter (I want to create contests)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Email */}
